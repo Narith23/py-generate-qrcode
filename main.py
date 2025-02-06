@@ -1,6 +1,6 @@
 import logging
 import os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import segno
 
 
@@ -43,6 +43,47 @@ def add_logo_to_qrcode(
     print(f"QR code with logo saved to {output_path}")
 
 
+def add_text_to_below_qrcode(
+    text: str, qr_path: str, output_path: str, font_size: int = 45
+):
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except IOError:
+        font = ImageFont.load_default()
+
+    qr_img = Image.open(qr_path).convert("RGBA")
+
+    text_width, text_height = font.getbbox(text)[2:]
+    qr_width, qr_height = qr_img.size
+    new_image_height = qr_height + text_height + 50
+
+    # Create a new blank image for QR + text
+    new_image = Image.new("RGB", (qr_width, new_image_height), "black")
+    new_image.paste(qr_img, (0, 0))
+
+    # Draw text
+    draw = ImageDraw.Draw(new_image)
+    text_position = ((qr_width - text_width) // 2, qr_height + 25)
+    draw.text(text_position, text, fill="white", font=font)
+
+    # Save final image
+    new_image.save(output_path)
+    print(f"QR code with text below saved to {output_path}")
+
+
+def add_rounded_corners(qr_path: str, output_path: str, radius: float = 20):
+    """Applies rounded corners to an image."""
+    qr_img = Image.open(qr_path).convert("RGBA")
+    mask = Image.new("L", qr_img.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle((0, 0, *qr_img.size), radius=radius, fill=255)
+
+    rounded_img = Image.new("RGBA", qr_img.size)
+    rounded_img.paste(qr_img, (0, 0), mask=mask)
+    rounded_img.save(output_path)
+    print(f"QR code with rounded corners saved to {output_path}")
+
+
 def main():
     data = "https://example.com"
     pre_file_name = "pre_file.png"
@@ -52,6 +93,16 @@ def main():
         input("Do you want to add logo to QrCode? (Yes/No): ").strip().lower() == "yes"
     )
     logo_path = input("Please input logo path: ") if is_add_logo else None
+    is_add_text = (
+        input("Do you want to add text below the QR code? (Yes/No): ").strip().lower()
+        == "yes"
+    )
+    below_text = input("Please input the text: ") if is_add_text else None
+    is_add_radius = (
+        input("Do you want to add radius to QrCode? (Yes/No): ").strip().lower()
+        == "yes"
+    )
+    radius = int(input("Please input radius: ") or 20) if is_add_radius else 20
 
     if is_add_logo and not logo_path:
         print("Logo path must be provided if 'is_add_logo' is Yes/Y/y.")
@@ -70,7 +121,23 @@ def main():
         else:
             os.rename(pre_file_name, result_file_name)
 
-        print(f"Done!")
+        if is_add_text:
+            os.rename(result_file_name, pre_file_name)
+            add_text_to_below_qrcode(
+                text=below_text, qr_path=pre_file_name, output_path=result_file_name
+            )
+            os.remove(pre_file_name)
+            print(f"Temporary file {pre_file_name} removed.")
+
+        if is_add_radius:
+            os.rename(result_file_name, pre_file_name)
+            add_rounded_corners(
+                qr_path=pre_file_name, output_path=result_file_name, radius=radius
+            )
+            os.remove(pre_file_name)
+            print(f"Temporary file {pre_file_name} removed.")
+
+        print("Done!")
 
     except Exception as e:
         logging.exception(str(e))
