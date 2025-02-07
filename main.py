@@ -16,8 +16,9 @@ def add_logo_to_qrcode(
     logo_path: str,
     output_path: str,
     logo_size_ratio: float = 0.2,
+    border_size: int = 15,
 ):
-    """Add a logo to the center of the QR code."""
+    """Add a logo to the center of the QR code with a border."""
     qr_img = Image.open(qr_path).convert("RGBA")
     logo = Image.open(logo_path).convert("RGBA")
 
@@ -32,13 +33,19 @@ def add_logo_to_qrcode(
     circle_mask.putalpha(circle_mask.point(lambda x: 0 if x < 150 else 255))
 
     # Overlay the logo on the QR code
-    qr_img.paste(
-        logo,
-        (qr_img.size[0] // 2 - logo_size // 2, qr_img.size[1] // 2 - logo_size // 2),
-        mask=circle_mask,
+    qr_img.paste(logo, (qr_img.size[0] // 2 - logo_size // 2, qr_img.size[1] // 2 - logo_size // 2), mask=circle_mask)
+
+    # Draw border around the logo
+    draw = ImageDraw.Draw(qr_img)
+    draw.ellipse(
+        (qr_img.size[0] // 2 - logo_size // 2 - border_size, qr_img.size[1] // 2 - logo_size // 2 - border_size,
+         qr_img.size[0] // 2 + logo_size // 2 + border_size, qr_img.size[1] // 2 + logo_size // 2 + border_size),
+        outline=(0, 0, 0),
+        width=border_size  # Adjust the width as needed
     )
+
     qr_img.save(output_path)
-    print(f"QR code with logo saved to {output_path}")
+    print(f"QR code with logo and border saved to {output_path}")
 
 
 def add_text_to_below_qrcode(
