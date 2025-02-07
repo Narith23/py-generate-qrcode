@@ -4,7 +4,7 @@ from PIL import Image, ImageFont, ImageDraw
 import segno
 
 
-def generate_qrcode(data: str, output_path: str, scale: int = 15, border: int = 2):
+def generate_qrcode(data: str, output_path: str, scale: int = 20, border: int = 2):
     """Generate a QR code and save it as a PNG file."""
     qr = segno.make(data)
     qr.save(output_path, scale=scale, border=border)
@@ -16,7 +16,6 @@ def add_logo_to_qrcode(
     logo_path: str,
     output_path: str,
     logo_size_ratio: float = 0.2,
-    border_size: int = 10,
 ):
     """Add a logo to the center of the QR code."""
     qr_img = Image.open(qr_path).convert("RGBA")
@@ -26,19 +25,21 @@ def add_logo_to_qrcode(
     logo_size = int(qr_img.size[0] * logo_size_ratio)
     logo = logo.resize((logo_size, logo_size))
 
-    # Create white background for logo
-    logo_bg_size = (logo_size + 2 * border_size, logo_size + 2 * border_size)
-    logo_bg = Image.new("RGBA", logo_bg_size, (255, 255, 255, 255))
-    logo_bg.paste(logo, (border_size, border_size), mask=logo)
+    # Create circle mask
+    circle_mask = Image.new('L', (logo_size, logo_size), 0)
+    draw = ImageDraw.Draw(circle_mask)
+    draw.ellipse((0, 0, logo_size, logo_size), fill=255)
 
-    # Calculate logo position
-    pos = (
-        (qr_img.size[0] - logo_bg_size[0]) // 2,
-        (qr_img.size[1] - logo_bg_size[1]) // 2,
-    )
+    # # Create white background for logo
+    # logo_bg = Image.new("RGBA", (logo_size, logo_size), (255, 255, 255, 255))
+    # logo_bg.putalpha(circle_mask)
+    
+    # Create black background for logo
+    logo_bg = Image.new("RGBA", (logo_size, logo_size), (0, 0, 0, 255))
+    logo_bg.putalpha(circle_mask)
 
     # Overlay the logo on the QR code
-    qr_img.paste(logo_bg, pos, mask=logo_bg)
+    qr_img.paste(logo, (qr_img.size[0] // 2 - logo_size // 2, qr_img.size[1] // 2 - logo_size // 2), mask=circle_mask)
     qr_img.save(output_path)
     print(f"QR code with logo saved to {output_path}")
 
@@ -138,6 +139,9 @@ def main():
             print(f"Temporary file {pre_file_name} removed.")
 
         print("Done!")
+        
+        # # Open the result file
+        # os.startfile(result_file_name)
 
     except Exception as e:
         logging.exception(str(e))
