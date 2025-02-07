@@ -1,6 +1,6 @@
 import logging
 import os
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageOps
 import segno
 
 
@@ -26,26 +26,23 @@ def add_logo_to_qrcode(
     logo = logo.resize((logo_size, logo_size))
 
     # Create circle mask
-    circle_mask = Image.new('L', (logo_size, logo_size), 0)
+    circle_mask = Image.new("L", (logo_size, logo_size), 0)
     draw = ImageDraw.Draw(circle_mask)
     draw.ellipse((0, 0, logo_size, logo_size), fill=255)
-
-    # # Create white background for logo
-    # logo_bg = Image.new("RGBA", (logo_size, logo_size), (255, 255, 255, 255))
-    # logo_bg.putalpha(circle_mask)
-    
-    # Create black background for logo
-    logo_bg = Image.new("RGBA", (logo_size, logo_size), (0, 0, 0, 255))
-    logo_bg.putalpha(circle_mask)
+    circle_mask.putalpha(circle_mask.point(lambda x: 0 if x < 150 else 255))
 
     # Overlay the logo on the QR code
-    qr_img.paste(logo, (qr_img.size[0] // 2 - logo_size // 2, qr_img.size[1] // 2 - logo_size // 2), mask=circle_mask)
+    qr_img.paste(
+        logo,
+        (qr_img.size[0] // 2 - logo_size // 2, qr_img.size[1] // 2 - logo_size // 2),
+        mask=circle_mask,
+    )
     qr_img.save(output_path)
     print(f"QR code with logo saved to {output_path}")
 
 
 def add_text_to_below_qrcode(
-    text: str, qr_path: str, output_path: str, font_size: int = 45
+    text: str, qr_path: str, output_path: str, font_size: int = 65
 ):
     try:
         font = ImageFont.truetype("arial.ttf", font_size)
@@ -56,7 +53,7 @@ def add_text_to_below_qrcode(
 
     text_width, text_height = font.getbbox(text)[2:]
     qr_width, qr_height = qr_img.size
-    new_image_height = qr_height + text_height + 50
+    new_image_height = qr_height + text_height + font_size
 
     # Create a new blank image for QR + text
     new_image = Image.new("RGB", (qr_width, new_image_height), "black")
@@ -86,7 +83,7 @@ def add_rounded_corners(qr_path: str, output_path: str, radius: float = 20):
 
 
 def main():
-    data = "https://example.com"
+    data = "https://uam.online.com.kh/.well-known/deep.html?id=2380"
     pre_file_name = "pre_file.png"
     result_file_name = "result.png"
 
@@ -139,7 +136,7 @@ def main():
             print(f"Temporary file {pre_file_name} removed.")
 
         print("Done!")
-        
+
         # # Open the result file
         # os.startfile(result_file_name)
 
