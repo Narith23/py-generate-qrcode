@@ -32,7 +32,14 @@ def add_logo_to_qrcode(
     circle_mask.putalpha(circle_mask.point(lambda x: 0 if x < 150 else 255))
 
     # Overlay the logo on the QR code
-    qr_img.paste(logo, (qr_img.size[0] // 2 - logo_size[0] // 2, qr_img.size[1] // 2 - logo_size[1] // 2), mask=circle_mask)
+    qr_img.paste(
+        logo,
+        (
+            qr_img.size[0] // 2 - logo_size[0] // 2,
+            qr_img.size[1] // 2 - logo_size[1] // 2,
+        ),
+        mask=circle_mask,
+    )
 
     # Calculate border size based on logo size
     border_size = int(min(logo_size) * border_size_ratio)
@@ -40,10 +47,14 @@ def add_logo_to_qrcode(
     # Draw border around the logo
     draw = ImageDraw.Draw(qr_img)
     draw.ellipse(
-        (qr_img.size[0] // 2 - logo_size[0] // 2 - border_size, qr_img.size[1] // 2 - logo_size[1] // 2 - border_size,
-         qr_img.size[0] // 2 + logo_size[0] // 2 + border_size, qr_img.size[1] // 2 + logo_size[1] // 2 + border_size),
+        (
+            qr_img.size[0] // 2 - logo_size[0] // 2 - border_size,
+            qr_img.size[1] // 2 - logo_size[1] // 2 - border_size,
+            qr_img.size[0] // 2 + logo_size[0] // 2 + border_size,
+            qr_img.size[1] // 2 + logo_size[1] // 2 + border_size,
+        ),
         outline=(0, 0, 0),
-        width=border_size  # Adjust the width as needed
+        width=border_size,  # Adjust the width as needed
     )
 
     qr_img.save(output_path)
@@ -96,11 +107,19 @@ def main():
     pre_file_name = "pre_file.png"
     result_file_name = "result.png"
 
-    is_add_logo = input("Do you want to add logo to QrCode? (Yes/No): ").strip().lower() == "yes"
+    is_add_logo = (
+        input("Do you want to add logo to QrCode? (Yes/No): ").strip().lower() == "yes"
+    )
     logo_path = input("Please input logo path: ") if is_add_logo else None
-    is_add_text = input("Do you want to add text below the QR code? (Yes/No): ").strip().lower() == "yes"
+    is_add_text = (
+        input("Do you want to add text below the QR code? (Yes/No): ").strip().lower()
+        == "yes"
+    )
     below_text = input("Please input the text: ") if is_add_text else None
-    is_add_radius = input("Do you want to add radius to QrCode? (Yes/No): ").strip().lower() == "yes"
+    is_add_radius = (
+        input("Do you want to add radius to QrCode? (Yes/No): ").strip().lower()
+        == "yes"
+    )
     radius = int(input("Please input radius: ") or 20) if is_add_radius else 20
 
     if is_add_logo and not logo_path:
@@ -121,12 +140,16 @@ def main():
 
         if is_add_text:
             os.rename(result_file_name, pre_file_name)
-            add_text_to_below_qrcode(text=below_text, qr_path=pre_file_name, output_path=result_file_name)
+            add_text_to_below_qrcode(
+                text=below_text, qr_path=pre_file_name, output_path=result_file_name
+            )
             os.remove(pre_file_name)
 
         if is_add_radius:
             os.rename(result_file_name, pre_file_name)
-            add_rounded_corners(qr_path=pre_file_name, output_path=result_file_name, radius=radius)
+            add_rounded_corners(
+                qr_path=pre_file_name, output_path=result_file_name, radius=radius
+            )
             os.remove(pre_file_name)
 
         print("Done!")
