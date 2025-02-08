@@ -3,6 +3,8 @@ import os
 from PIL import Image, ImageFont, ImageDraw, ImageOps
 import segno
 
+from ImagePillow.command import add_border_color_to_image
+
 
 def generate_qrcode(data: str, output_path: str, scale: int = 20, border: int = 2):
     """Generate a QR code and save it as a PNG file."""
@@ -62,7 +64,7 @@ def add_logo_to_qrcode(
 
 
 def add_text_to_below_qrcode(
-    text: str, qr_path: str, output_path: str, font_size: int = 65
+    text: str, qr_path: str, output_path: str, font_size: int = 95
 ):
     try:
         font = ImageFont.truetype("arial.ttf", font_size)
@@ -81,7 +83,7 @@ def add_text_to_below_qrcode(
 
     # Draw text
     draw = ImageDraw.Draw(new_image)
-    text_position = ((qr_width - text_width) // 2, qr_height + 25)
+    text_position = ((qr_width - text_width) // 2, qr_height + (font_size // 2))
     draw.text(text_position, text, fill="white", font=font)
 
     # Save final image
@@ -162,3 +164,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+    add_border_color_to_image(
+        image_path="result.png",
+        output_path="output.png",
+        border_size=20,
+        border_radius=20,
+        color=(0, 0, 0),
+    )
