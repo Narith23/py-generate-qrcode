@@ -81,10 +81,12 @@ def add_text_to_below_qrcode(
     new_image = Image.new("RGB", (qr_width, new_image_height), "black")
     new_image.paste(qr_img, (0, 0))
 
-    # Draw text
+    # Draw bold text by drawing the text multiple times with slight offsets
     draw = ImageDraw.Draw(new_image)
     text_position = ((qr_width - text_width) // 2, qr_height + (font_size // 2))
-    draw.text(text_position, text, fill="white", font=font)
+    offsets = [(0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)]
+    for offset in offsets:
+        draw.text((text_position[0] + offset[0], text_position[1] + offset[1]), text, fill="white", font=font)
 
     # Save final image
     new_image.save(output_path)
